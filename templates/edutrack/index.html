@@ -1,0 +1,118 @@
+{% extends 'edutrack/base.html' %}
+{% block title %}EduTrack - Sign Up{% endblock %}
+
+{% block body %}
+<div class="theme-switch">
+    <label for="theme-toggle">Dark Mode</label>
+    <input type="checkbox" id="theme-toggle">
+</div>
+
+<div class="glass-card">
+    <h2>Join EduTrack</h2>
+    <p class="subtitle">Empowering your educational journey.</p>
+
+    <div id="error-banner" class="error-banner" style="display:none;"></div>
+
+    <form id="signup-form" novalidate>
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="input-group">
+                <input type="text" id="fullname" name="fullname" placeholder=" " required>
+                <label for="fullname">Full Name *</label>
+                <span class="error-msg" id="fullname-error"></span>
+            </div>
+            <div class="input-group">
+                <input type="email" id="email" name="email" placeholder=" " required>
+                <label for="email">Email Address *</label>
+                <span class="error-msg" id="email-error"></span>
+            </div>
+            <div class="input-group">
+                <input type="tel" id="phone" name="phone" placeholder=" " pattern="[0-9]{10}" required>
+                <label for="phone">Phone Number *</label>
+                <span class="error-msg" id="phone-error"></span>
+            </div>
+            <div class="input-group">
+                <input type="date" id="dob" name="dob" placeholder=" " required>
+                <label class="active-label" for="dob">Date of Birth *</label>
+                <span class="error-msg" id="dob-error"></span>
+                <span class="info-msg" id="age-display"></span>
+            </div>
+            <div class="input-group">
+                <select id="gender" name="gender" required>
+                    <option value="" disabled selected></option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+                <label class="active-label" for="gender">Gender</label>
+            </div>
+            <div class="input-group full-width">
+                <input type="text" id="address" name="address" placeholder=" ">
+                <label for="address">Address</label>
+            </div>
+            <div class="input-group">
+                <select id="course" name="course" required>
+                    <option value="" disabled selected></option>
+                    <option value="btech">B.Tech</option>
+                    <option value="mba">MBA</option>
+                    <option value="mca">MCA</option>
+                </select>
+                <label class="active-label" for="course">Course *</label>
+            </div>
+            <div class="input-group">
+                <select id="branch" name="branch" required disabled>
+                    <option value="" disabled selected>Select Course First</option>
+                </select>
+                <label class="active-label" for="branch">Branch *</label>
+            </div>
+            <div class="input-group full-width">
+                <div class="location-detect">
+                    <select id="college" name="college" required>
+                        <option value="" disabled selected>Detecting local colleges...</option>
+                    </select>
+                    <button type="button" id="detect-btn" title="Refresh Location">
+                        <i class="fas fa-location-crosshairs"></i>
+                    </button>
+                </div>
+                <label class="active-label" for="college">College *</label>
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" name="password" placeholder=" " required>
+                <label for="password">Password *</label>
+                <i class="fas fa-eye toggle-password" data-target="password"></i>
+                <div class="strength-meter">
+                    <div id="strength-bar"></div>
+                </div>
+                <span class="error-msg" id="password-error"></span>
+            </div>
+            <div class="input-group">
+                <input type="password" id="confirm-password" name="confirm-password" placeholder=" " required>
+                <label for="confirm-password">Confirm Password *</label>
+                <i class="fas fa-eye toggle-password" data-target="confirm-password"></i>
+                <span class="error-msg" id="confirm-password-error"></span>
+            </div>
+        </div>
+
+        <button type="submit" id="submit-btn" class="submit-btn">
+            <span class="btn-text">Sign Up</span>
+            <div class="spinner"></div>
+        </button>
+
+        <div class="redirect-link">
+            <p>Already have an account? <a href="/login/">Log in</a></p>
+        </div>
+    </form>
+</div>
+
+<div id="success-modal" class="modal">
+    <div class="modal-content glass-card">
+        <i class="fas fa-check-circle success-icon"></i>
+        <h3>Registration Successful!</h3>
+        <p>Welcome to EduTrack. Redirecting to your dashboard...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/script.js"></script>
+{% endblock %}

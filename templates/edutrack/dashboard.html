@@ -1,0 +1,809 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTrack - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+
+<body>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+            <span class="logo-text">EduTrack</span>
+        </div>
+        <span class="nav-section-label">Main</span>
+        <div class="nav-item active" data-tab="home"><i class="fas fa-house"></i> Home</div>
+        <div class="nav-item" data-tab="tasks"><i class="fas fa-list-check"></i> Task Planner</div>
+        <div class="nav-item" data-tab="practice"><i class="fas fa-code"></i> Practice Log</div>
+        <span class="nav-section-label">Academic</span>
+        <div class="nav-item" data-tab="attendance"><i class="fas fa-calendar-check"></i> Attendance</div>
+        <div class="nav-item" data-tab="cgpa"><i class="fas fa-chart-line"></i> CGPA Predictor</div>
+        <div class="nav-item" data-tab="timetable"><i class="fas fa-table-cells"></i> Timetable & Calendar</div>
+        <span class="nav-section-label">Growth</span>
+        <div class="nav-item" data-tab="streaks"><i class="fas fa-fire"></i> Streaks & Badges</div>
+        <div class="nav-item" data-tab="skills"><i class="fas fa-brain"></i> Soft Skills</div>
+        <div class="nav-item" data-tab="analytics"><i class="fas fa-chart-bar"></i> Analytics</div>
+        <span class="nav-section-label">More</span>
+        <div class="nav-item" data-tab="feedback"><i class="fas fa-comment-dots"></i> Feedback</div>
+        <div class="nav-item" data-tab="settings"><i class="fas fa-gear"></i> Settings</div>
+        <div class="sidebar-footer">
+            <div class="user-card" id="sb-user-card" onclick="switchTab('settings')" style="cursor:pointer;"
+                title="Open Settings">
+                <div class="user-avatar" id="sb-avatar">S</div>
+                <div style="flex:1;min-width:0;">
+                    <div class="user-name" id="sb-name">Student</div>
+                    <div class="user-role">Student</div>
+                </div>
+                <i class="fas fa-pen" style="font-size:0.65rem;color:var(--muted);flex-shrink:0;"></i>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main">
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="menu-btn" id="menu-btn"><i class="fas fa-bars"></i></button>
+                <span class="page-title" id="page-title">Home</span>
+            </div>
+            <div class="topbar-right">
+                <div class="streak-badge"><i class="fas fa-fire"></i> <span id="streak-count">0</span> Day Streak</div>
+                <button class="theme-toggle-btn" id="theme-btn"><i class="fas fa-moon"></i> Dark</button>
+            </div>
+        </div>
+
+        <div class="content">
+
+            <!-- HOME -->
+            <div class="tab-panel active" id="tab-home">
+                <div class="welcome-banner">
+                    <div>
+                        <h3>Welcome back, <span id="welcome-name">Student</span>! 👋</h3>
+                        <p id="welcome-sub">Here's your academic snapshot for today.</p>
+                    </div>
+                    <div class="welcome-emoji">🎓</div>
+                </div>
+                <div class="quick-actions">
+                    <div class="qa-chip" onclick="switchTab('tasks')"><i class="fas fa-plus"></i> Add Task</div>
+                    <div class="qa-chip" onclick="switchTab('practice')"><i class="fas fa-pen"></i> Log Practice</div>
+                    <div class="qa-chip" onclick="switchTab('skills')"><i class="fas fa-brain"></i> Take Assessment
+                    </div>
+                    <div class="qa-chip" onclick="switchTab('analytics')"><i class="fas fa-chart-bar"></i> View Report
+                    </div>
+                    <div class="qa-chip" onclick="switchTab('timetable')"><i class="fas fa-table-cells"></i> Timetable
+                    </div>
+                </div>
+                <div id="reminder-banner" class="reminder-banner" style="display:none;">
+                    <span class="rb-text" id="rb-text-content"></span>
+                    <button class="rb-dismiss" onclick="dismissReminderBanner()">&times;</button>
+                </div>
+                <div class="grid-4 mb-1">
+                    <div class="card stat-card">
+                        <div class="stat-icon blue"><i class="fas fa-fire"></i></div>
+                        <div class="stat-value" id="home-streak">0</div>
+                        <div class="stat-label">Day Streak</div>
+                        <div class="stat-sub sub-green">Keep it up!</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon green"><i class="fas fa-list-check"></i></div>
+                        <div class="stat-value" id="home-tasks">0</div>
+                        <div class="stat-label">Tasks Done</div>
+                        <div class="stat-sub sub-green">of <span id="home-tasks-total">0</span> total</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon purple"><i class="fas fa-star"></i></div>
+                        <div class="stat-value" id="home-cgpa">—</div>
+                        <div class="stat-label">Predicted CGPA</div>
+                        <div class="stat-sub sub-yellow" id="home-cgpa-sub">Update marks</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon orange"><i class="fas fa-calendar-check"></i></div>
+                        <div class="stat-value" id="home-att">—</div>
+                        <div class="stat-label">Avg Attendance</div>
+                        <div class="stat-sub sub-yellow" id="home-att-sub">Update records</div>
+                    </div>
+                </div>
+                <div class="grid-2 mb-1">
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-calendar-day"></i> Today's Tasks</div>
+                        <div id="home-today-tasks">
+                            <div class="empty-state"><i class="fas fa-check-circle"></i>
+                                <p>No tasks for today. Add some!</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-trophy"></i> Recent Badges</div>
+                        <div id="home-badges"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-lightbulb"></i> Motivational Quote</div>
+                    <p id="quote-text" style="font-size:0.93rem;font-style:italic;line-height:1.65;padding:0.4rem 0;">
+                    </p>
+                    <div style="display:flex;justify-content:flex-end;margin-top:0.5rem;"><button
+                            class="btn-primary btn-sm" onclick="newQuote()"><i class="fas fa-sync-alt"></i> New
+                            Quote</button></div>
+                </div>
+            </div>
+
+            <!-- TASKS -->
+            <div class="tab-panel" id="tab-tasks">
+                <div class="section-header">
+                    <span class="section-title">📋 Task Planner</span>
+                    <span class="text-muted" id="task-summary">0 of 0 done</span>
+                </div>
+                <div class="card">
+                    <div class="task-input-row">
+                        <input type="text" id="task-input" placeholder="Add a new task..." maxlength="80">
+                        <select id="task-priority">
+                            <option value="high">🔴 High</option>
+                            <option value="medium" selected>🟡 Medium</option>
+                            <option value="low">🟢 Low</option>
+                        </select>
+                        <input type="date" id="task-due" style="max-width:140px;">
+                        <button class="btn-primary" onclick="addTask()"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                    <div class="filter-tabs">
+                        <div class="filter-tab active" data-filter="all">All</div>
+                        <div class="filter-tab" data-filter="pending">Pending</div>
+                        <div class="filter-tab" data-filter="done">Completed</div>
+                        <div class="filter-tab" data-filter="high">High Priority</div>
+                    </div>
+                    <div id="task-list"></div>
+                </div>
+            </div>
+
+            <!-- PRACTICE LOG -->
+            <div class="tab-panel" id="tab-practice">
+                <div class="section-header">
+                    <span class="section-title">💻 Practice Log & Notes</span>
+                    <span class="text-muted">Your personal learning journal</span>
+                </div>
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-pen-nib"></i> New Entry</div>
+                        <div class="note-toolbar">
+                            <input type="text" id="note-category" placeholder="Category (e.g. Coding, Hackathon...)" maxlength="40" style="max-width:220px;">
+                            <input type="text" id="note-title-input" placeholder="Entry title..." style="flex:1;">
+                        </div>
+                        <textarea class="note-area" id="note-content"
+                            placeholder="Write your notes, log your practice, track what you learned today..."></textarea>
+                        <div style="display:flex;justify-content:flex-end;margin-top:0.7rem;gap:7px;">
+                            <button class="btn-primary btn-sm" onclick="clearNote()"><i class="fas fa-eraser"></i>
+                                Clear</button>
+                            <button class="btn-primary" onclick="saveNote()"><i class="fas fa-save"></i> Save
+                                Entry</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-book-open"></i> Journal Entries</div>
+                        <div id="note-list-container">
+                            <div class="empty-state"><i class="fas fa-journal-whills"></i>
+                                <p>No entries yet. Start writing!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ATTENDANCE -->
+            <div class="tab-panel" id="tab-attendance">
+                <div class="section-header">
+                    <span class="section-title">📅 Attendance Tracker</span>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn-primary btn-sm" id="btn-enable-notif"
+                            style="display:none;background:var(--warning);color:#fff;"
+                            onclick="registerNotifications()"><i class="fas fa-bell"></i> Enable Notifications</button>
+                        <button class="btn-primary btn-sm" onclick="saveAttendance()"><i class="fas fa-save"></i>
+                            Save</button>
+                    </div>
+                </div>
+                <div id="att-empty-hint" class="card mb-1" style="display:none;border:1.5px dashed var(--primary);background:rgba(74,144,226,0.06);">
+                    <div style="display:flex;align-items:center;gap:12px;padding:0.2rem 0;">
+                        <i class="fas fa-table-cells" style="font-size:1.6rem;color:var(--primary);flex-shrink:0;"></i>
+                        <div>
+                            <div style="font-weight:700;font-size:0.9rem;margin-bottom:3px;">No subjects yet</div>
+                            <div style="font-size:0.8rem;color:var(--muted);line-height:1.5;">Upload your timetable in the <strong style="color:var(--primary);cursor:pointer;" onclick="switchTab('timetable')">Timetable &amp; Calendar</strong> tab and confirm subjects — they'll appear here automatically.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mb-1">
+                    <div class="card-title"><i class="fas fa-table"></i> Enter Attendance Data</div>
+                    <div style="overflow-x:auto;">
+                        <table class="marks-table">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Classes Held</th>
+                                    <th>Classes Attended</th>
+                                    <th>%</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="att-tbody"></tbody>
+                        </table>
+                    </div>
+                    <button class="btn-primary btn-sm" style="margin-top:0.7rem;" onclick="addAttSubject()"><i
+                            class="fas fa-plus"></i> Add Subject</button>
+                </div>
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-chart-bar"></i> Attendance Overview</div>
+                    <div id="att-bars"></div>
+                    <hr class="divider">
+                    <div id="att-prediction" style="font-size:0.86rem;line-height:1.75;"></div>
+                </div>
+            </div>
+
+            <!-- CGPA PREDICTOR -->
+            <div class="tab-panel" id="tab-cgpa">
+                <div class="section-header">
+                    <span class="section-title">📊 CGPA Predictor</span>
+                    <button class="btn-primary btn-sm" onclick="calcCGPA()"><i class="fas fa-calculator"></i>
+                        Calculate</button>
+                </div>
+                <div id="cgpa-empty-hint" class="card mb-1" style="display:none;border:1.5px dashed var(--primary);background:rgba(74,144,226,0.06);">
+                    <div style="display:flex;align-items:center;gap:12px;padding:0.2rem 0;">
+                        <i class="fas fa-chart-line" style="font-size:1.6rem;color:var(--primary);flex-shrink:0;"></i>
+                        <div>
+                            <div style="font-weight:700;font-size:0.9rem;margin-bottom:3px;">No subjects yet</div>
+                            <div style="font-size:0.8rem;color:var(--muted);line-height:1.5;">Upload your timetable in the <strong style="color:var(--primary);cursor:pointer;" onclick="switchTab('timetable')">Timetable &amp; Calendar</strong> tab — confirmed subjects will auto-populate here for marks entry.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-table"></i> Subject Marks</div>
+                        <div style="overflow-x:auto;">
+                            <table class="marks-table">
+                                <thead>
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>Max</th>
+                                        <th>Obtained</th>
+                                        <th>Credits</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="marks-tbody"></tbody>
+                            </table>
+                        </div>
+                        <button class="btn-primary btn-sm" style="margin-top:0.7rem;" onclick="addMarkRow()"><i
+                                class="fas fa-plus"></i> Add Subject</button>
+                    </div>
+                    <div class="card flex-center" style="flex-direction:column;gap:1rem;">
+                        <div class="card-title" style="text-align:center;"><i class="fas fa-star"></i> Predicted CGPA
+                        </div>
+                        <div class="cgpa-dial" id="cgpa-dial">
+                            <div class="cgpa-inner">
+                                <div class="cgpa-val" id="cgpa-val">—</div>
+                                <div class="cgpa-lbl">/ 10.0</div>
+                            </div>
+                        </div>
+                        <div id="cgpa-feedback"
+                            style="text-align:center;font-size:0.83rem;color:var(--muted);max-width:210px;line-height:1.5;">
+                        </div>
+                        <div id="cgpa-grade" class="stat-sub" style="font-size:0.83rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TIMETABLE & ACADEMIC CALENDAR -->
+            <div class="tab-panel" id="tab-timetable">
+                <div class="section-header">
+                    <span class="section-title">🗓️ Timetable & Academic Calendar</span>
+                    <span class="text-muted">Upload images to analyze with AI</span>
+                </div>
+                <div class="grid-2 mb-1">
+                    <!-- Timetable Upload -->
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-table-cells"></i> Upload Timetable</div>
+                        <div class="upload-zone" id="tt-drop-zone"
+                            onclick="document.getElementById('tt-file-input').click()">
+                            <div class="upload-icon-wrap"><i class="fas fa-image"></i></div>
+                            <div class="upload-label">Drop image or click to upload</div>
+                            <div class="upload-sub">JPG, PNG, WEBP supported</div>
+                            <input type="file" id="tt-file-input" accept="image/*" style="display:none">
+                        </div>
+                        <div id="tt-preview-wrap" style="display:none;margin-top:0.75rem;">
+                            <img id="tt-preview-img"
+                                style="width:100%;border-radius:10px;max-height:180px;object-fit:cover;border:1px solid var(--border);">
+                            <div style="display:flex;gap:7px;margin-top:0.65rem;">
+                                <button class="btn-primary" style="flex:1;justify-content:center;"
+                                    onclick="analyzeTimetable()">
+                                    <i class="fas fa-magnifying-glass"></i> Analyze with AI
+                                </button>
+                                <button class="btn-primary btn-sm"
+                                    style="background:var(--glass-bg);color:var(--text-color);border:1px solid var(--border);"
+                                    onclick="clearTTUpload()">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="tt-loading" class="upload-loading" style="display:none;">
+                            <div class="upload-spinner"></div><span>Analyzing timetable with AI...</span>
+                        </div>
+                    </div>
+
+                    <!-- Academic Calendar Upload -->
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-calendar-days"></i> Upload Academic Calendar</div>
+                        <div class="upload-zone" id="cal-drop-zone"
+                            onclick="document.getElementById('cal-file-input').click()">
+                            <div class="upload-icon-wrap"><i class="fas fa-image"></i></div>
+                            <div class="upload-label">Drop image or click to upload</div>
+                            <div class="upload-sub">JPG, PNG, WEBP supported</div>
+                            <input type="file" id="cal-file-input" accept="image/*" style="display:none">
+                        </div>
+                        <div id="cal-preview-wrap" style="display:none;margin-top:0.75rem;">
+                            <img id="cal-preview-img"
+                                style="width:100%;border-radius:10px;max-height:180px;object-fit:cover;border:1px solid var(--border);">
+                            <div style="display:flex;gap:7px;margin-top:0.65rem;">
+                                <button class="btn-primary" style="flex:1;justify-content:center;"
+                                    onclick="analyzeCalendar()">
+                                    <i class="fas fa-magnifying-glass"></i> Analyze with AI
+                                </button>
+                                <button class="btn-primary btn-sm"
+                                    style="background:var(--glass-bg);color:var(--text-color);border:1px solid var(--border);"
+                                    onclick="clearCalUpload()">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="cal-loading" class="upload-loading" style="display:none;">
+                            <div class="upload-spinner"></div><span>Analyzing calendar with AI...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timetable Results -->
+                <div id="tt-results" class="card mb-1 result-panel">
+                    <div class="card-title"><i class="fas fa-table-cells"></i> Detected Schedule</div>
+                    <div id="tt-summary-text"
+                        style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;line-height:1.6;"></div>
+                    <div id="tt-subject-grid" class="subject-chip-grid"></div>
+                    <hr class="divider">
+                    <div class="card-title" style="margin-top:0.3rem;"><i class="fas fa-calendar-week"></i> Weekly
+                        Subject Overview</div>
+                    <div id="tt-weekly-table" style="overflow-x:auto;"></div>
+                </div>
+
+                <!-- Calendar Results -->
+                <div id="cal-results" class="card mb-1 result-panel">
+                    <div class="card-title"><i class="fas fa-calendar-check"></i> Academic Calendar Analysis</div>
+                    <div id="cal-summary-text"
+                        style="font-size:0.85rem;color:var(--muted);margin-bottom:0.75rem;line-height:1.6;"></div>
+                    <div class="grid-3 mb-1" id="cal-stat-grid"></div>
+                    <div class="card-title"><i class="fas fa-umbrella-beach"></i> Holidays & Key Dates</div>
+                    <div id="cal-holiday-list"></div>
+                </div>
+
+                <!-- Combined Analysis -->
+                <div id="combined-analysis" class="card result-panel">
+                    <div class="card-title"><i class="fas fa-calculator"></i> Projected Lecture Count</div>
+                    <div id="combined-content"></div>
+                </div>
+            </div>
+
+            <!-- STREAKS -->
+            <div class="tab-panel" id="tab-streaks">
+                <div class="section-header">
+                    <span class="section-title">🔥 Streaks & Achievements</span>
+                    <button class="btn-primary btn-sm" onclick="logToday()"><i class="fas fa-fire"></i> Log
+                        Today</button>
+                </div>
+                <div class="grid-3 mb-1">
+                    <div class="card stat-card">
+                        <div class="stat-icon blue"><i class="fas fa-fire"></i></div>
+                        <div class="stat-value" id="cur-streak">0</div>
+                        <div class="stat-label">Current Streak</div>
+                        <div class="stat-sub sub-green">days</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon purple"><i class="fas fa-trophy"></i></div>
+                        <div class="stat-value" id="best-streak">0</div>
+                        <div class="stat-label">Best Streak</div>
+                        <div class="stat-sub sub-yellow">days</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-icon green"><i class="fas fa-medal"></i></div>
+                        <div class="stat-value" id="earned-badges-count">0</div>
+                        <div class="stat-label">Badges Earned</div>
+                        <div class="stat-sub sub-green">achievements</div>
+                    </div>
+                </div>
+                <div class="card mb-1">
+                    <div class="card-title"><i class="fas fa-calendar-alt"></i> Last 28 Days Activity</div>
+                    <div class="streak-calendar" id="streak-cal"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-medal"></i> Badges & Achievements</div>
+                    <div class="badge-grid" id="badge-grid"></div>
+                </div>
+            </div>
+
+            <!-- SOFT SKILLS -->
+            <div class="tab-panel" id="tab-skills">
+                <div class="section-header">
+                    <span class="section-title">🧠 Soft Skills Assessment</span>
+                </div>
+                <div id="skills-intro" class="card mb-1">
+                    <div class="card-title"><i class="fas fa-info-circle"></i> About This Assessment</div>
+                    <p style="font-size:0.86rem;line-height:1.7;margin-bottom:1rem;">Evaluate your soft skills across
+                        Communication, Teamwork, Time Management & Problem Solving. Includes MCQs, rating scales, and
+                        short answers. Use the 🔊 button to have questions read aloud instantly.</p>
+                    <button class="btn-primary" onclick="startAssessment()"><i class="fas fa-play"></i> Start
+                        Assessment</button>
+                </div>
+                <div id="skills-quiz" class="card" style="display:none;">
+                    <div class="quiz-container">
+                        <div class="flex-between mb-1">
+                            <span class="chip" id="quiz-category-chip">Communication</span>
+                            <button class="voice-btn" id="voice-btn" onclick="readQuestion()"><i
+                                    class="fas fa-volume-up"></i> Read Aloud</button>
+                        </div>
+                        <div class="quiz-progress-bar">
+                            <div class="quiz-progress-fill" id="quiz-progress-fill" style="width:0%;"></div>
+                        </div>
+                        <div class="quiz-q-num" id="quiz-q-num">Question 1 of 12</div>
+                        <div class="quiz-q" id="quiz-q-text"></div>
+                        <div id="quiz-options-container"></div>
+                        <div class="quiz-nav">
+                            <button class="btn-primary btn-sm" onclick="prevQ()" id="quiz-prev" style="opacity:0.5;"
+                                disabled><i class="fas fa-arrow-left"></i> Prev</button>
+                            <div id="quiz-dots" style="display:flex;gap:4px;"></div>
+                            <button class="btn-primary btn-sm" onclick="nextQ()" id="quiz-next">Next <i
+                                    class="fas fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div id="skills-result" class="card" style="display:none;">
+                    <div class="card-title"><i class="fas fa-chart-radar"></i> Your Skill Results</div>
+                    <div class="skill-result-grid" id="skill-result-grid"></div>
+                    <hr class="divider">
+                    <div class="chart-wrap"><canvas id="skills-chart"></canvas></div>
+                    <div style="margin-top:1rem;text-align:center;">
+                        <button class="btn-primary" onclick="retakeAssessment()"><i class="fas fa-redo"></i> Retake
+                            Assessment</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS -->
+            <div class="tab-panel" id="tab-analytics">
+                <div class="section-header">
+                    <span class="section-title">📈 Progress Analytics</span>
+                </div>
+                <div class="analytics-subtabs">
+                    <div class="analytics-subtab active" data-chart="scores">Scores</div>
+                    <div class="analytics-subtab" data-chart="attendance">Attendance</div>
+                    <div class="analytics-subtab" data-chart="streaks">Streaks</div>
+                    <div class="analytics-subtab" data-chart="skills">Skills</div>
+                </div>
+                <div class="grid-2 mb-1">
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-chart-line"></i> <span id="main-chart-title">Score
+                                Trend</span></div>
+                        <div class="chart-wrap"><canvas id="main-analytics-chart"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-chart-pie"></i> Task Completion</div>
+                        <div class="chart-wrap"><canvas id="task-pie-chart"></canvas></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-table"></i> Weekly Summary</div>
+                    <div id="weekly-summary-grid" class="grid-4"></div>
+                </div>
+            </div>
+
+            <!-- FEEDBACK -->
+            <div class="tab-panel" id="tab-feedback">
+                <div class="section-header">
+                    <span class="section-title">💬 Feedback</span>
+                    <span class="text-muted">We value your thoughts</span>
+                </div>
+                <div class="grid-2 mb-1">
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-pen-to-square"></i> Share Your Feedback</div>
+                        <div class="feedback-rating-section">
+                            <div
+                                style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">
+                                Overall Experience</div>
+                            <div class="star-rating" id="star-rating">
+                                <span class="star" data-val="1">★</span>
+                                <span class="star" data-val="2">★</span>
+                                <span class="star" data-val="3">★</span>
+                                <span class="star" data-val="4">★</span>
+                                <span class="star" data-val="5">★</span>
+                            </div>
+                            <div id="star-label"
+                                style="font-size:0.75rem;color:var(--muted);margin-top:0.3rem;min-height:18px;transition:all 0.2s;">
+                            </div>
+                        </div>
+                        <div class="input-group-fb">
+                            <label class="fb-label">Category</label>
+                            <select id="fb-category" class="fb-input">
+                                <option value="general">💬 General</option>
+                                <option value="bug">🐛 Bug Report</option>
+                                <option value="feature">✨ Feature Request</option>
+                                <option value="ui">🎨 UI / Design</option>
+                                <option value="performance">⚡ Performance</option>
+                            </select>
+                        </div>
+                        <div class="input-group-fb">
+                            <label class="fb-label">Subject</label>
+                            <input type="text" id="fb-subject" class="fb-input"
+                                placeholder="Brief summary of your feedback...">
+                        </div>
+                        <div class="input-group-fb">
+                            <label class="fb-label">Message</label>
+                            <textarea id="fb-message" class="fb-textarea" rows="4"
+                                placeholder="Tell us what you think, what could be improved, or report an issue..."></textarea>
+                        </div>
+                        <div class="input-group-fb">
+                            <label class="fb-label">How are you feeling?</label>
+                            <div class="mood-selector" id="mood-selector">
+                                <div class="mood-btn" data-mood="love" title="Love it!">😍</div>
+                                <div class="mood-btn" data-mood="happy" title="Happy">😊</div>
+                                <div class="mood-btn" data-mood="neutral" title="Neutral">😐</div>
+                                <div class="mood-btn" data-mood="sad" title="Could be better">😕</div>
+                                <div class="mood-btn" data-mood="frustrated" title="Frustrated">😤</div>
+                            </div>
+                        </div>
+                        <button class="btn-primary" style="width:100%;margin-top:0.7rem;justify-content:center;"
+                            onclick="submitFeedback()">
+                            <i class="fas fa-paper-plane"></i> Submit Feedback
+                        </button>
+                    </div>
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-clock-rotate-left"></i> Feedback History</div>
+                        <div id="feedback-list">
+                            <div class="empty-state"><i class="fas fa-comment-slash"></i>
+                                <p>No feedback submitted yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-chart-simple"></i> Feedback Summary</div>
+                    <div class="grid-4" id="feedback-stats-grid">
+                        <div class="card stat-card" style="box-shadow:none;">
+                            <div class="stat-icon blue"><i class="fas fa-paper-plane"></i></div>
+                            <div class="stat-value" id="fb-count">0</div>
+                            <div class="stat-label">Total Submitted</div>
+                        </div>
+                        <div class="card stat-card" style="box-shadow:none;">
+                            <div class="stat-icon green"><i class="fas fa-star"></i></div>
+                            <div class="stat-value" id="fb-avg-rating">—</div>
+                            <div class="stat-label">Avg Rating</div>
+                        </div>
+                        <div class="card stat-card" style="box-shadow:none;">
+                            <div class="stat-icon purple"><i class="fas fa-tag"></i></div>
+                            <div class="stat-value" id="fb-top-cat" style="font-size:1rem;">—</div>
+                            <div class="stat-label">Top Category</div>
+                        </div>
+                        <div class="card stat-card" style="box-shadow:none;">
+                            <div class="stat-icon orange"><i class="fas fa-face-smile"></i></div>
+                            <div class="stat-value" id="fb-top-mood" style="font-size:1.5rem;">—</div>
+                            <div class="stat-label">Common Mood</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS -->
+            <div class="tab-panel" id="tab-settings">
+                <div class="section-header">
+                    <span class="section-title">⚙️ Settings</span>
+                </div>
+                <div class="grid-2 mb-1">
+                    <!-- Profile -->
+                    <div class="card">
+                        <div class="card-title"><i class="fas fa-user-circle"></i> Profile</div>
+                        <div class="profile-avatar-section">
+                            <div class="profile-avatar-large" id="settings-avatar">S</div>
+                            <div>
+                                <div id="settings-display-name" style="font-size:1rem;font-weight:700;"></div>
+                                <div id="settings-display-email"
+                                    style="font-size:0.78rem;color:var(--muted);margin-top:2px;"></div>
+                                <div id="settings-display-course"
+                                    style="font-size:0.74rem;color:var(--primary);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="divider">
+                        <div class="settings-fields">
+                            <div class="settings-field-group">
+                                <label class="settings-label">Full Name</label>
+                                <input type="text" id="set-fullname" class="settings-input" placeholder="Full Name">
+                            </div>
+                            <div class="settings-field-group">
+                                <label class="settings-label">Email Address</label>
+                                <input type="email" id="set-email" class="settings-input" placeholder="Email">
+                            </div>
+                            <div class="settings-field-group">
+                                <label class="settings-label">Phone Number</label>
+                                <input type="tel" id="set-phone" class="settings-input" placeholder="Phone">
+                            </div>
+                            <div class="settings-field-group">
+                                <label class="settings-label">Date of Birth</label>
+                                <input type="date" id="set-dob" class="settings-input">
+                            </div>
+                            <div class="settings-field-group">
+                                <label class="settings-label">Gender</label>
+                                <select id="set-gender" class="settings-input">
+                                    <option value="">Select</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="settings-field-group" style="grid-column:span 2;">
+                                <label class="settings-label">Address</label>
+                                <input type="text" id="set-address" class="settings-input" placeholder="Address">
+                            </div>
+                            <div class="settings-field-group">
+                                <label class="settings-label">Course</label>
+                                <select id="set-course" class="settings-input">
+                                    <option value="">Select</option>
+                                    <option value="btech">B.Tech</option>
+                                    <option value="mba">MBA</option>
+                                    <option value="mca">MCA</option>
+                                </select>
+                            </div>
+                            <div class="settings-field-group" style="grid-column:span 2;">
+                                <div style="display:flex;align-items:center;gap:8px;padding:0.65rem 0.75rem;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25);border-radius:8px;">
+                                    <i class="fas fa-shield-halved" style="color:var(--success);font-size:0.9rem;"></i>
+                                    <span style="font-size:0.78rem;color:var(--success);font-weight:600;">Timetable AI analysis is active — no API key needed.</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:1rem;">
+                            <button class="btn-primary" style="flex:1;justify-content:center;"
+                                onclick="saveProfileSettings()">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                        </div>
+                        <div id="profile-save-msg"
+                            style="font-size:0.78rem;margin-top:0.5rem;text-align:center;min-height:18px;"></div>
+                    </div>
+
+                    <div style="display:flex;flex-direction:column;gap:1rem;">
+                        <!-- Password Reset -->
+                        <div class="card">
+                            <div class="card-title"><i class="fas fa-lock"></i> Reset Password</div>
+                            <div class="settings-field-group" style="margin-bottom:0.65rem;">
+                                <label class="settings-label">Current Password</label>
+                                <div style="position:relative;">
+                                    <input type="password" id="set-cur-pass" class="settings-input"
+                                        placeholder="Current password" style="padding-right:2.4rem;">
+                                    <i class="fas fa-eye toggle-password-settings" data-target="set-cur-pass"></i>
+                                </div>
+                            </div>
+                            <div class="settings-field-group" style="margin-bottom:0.65rem;">
+                                <label class="settings-label">New Password</label>
+                                <div style="position:relative;">
+                                    <input type="password" id="set-new-pass" class="settings-input"
+                                        placeholder="New password" style="padding-right:2.4rem;">
+                                    <i class="fas fa-eye toggle-password-settings" data-target="set-new-pass"></i>
+                                </div>
+                                <div class="strength-meter" style="margin-top:6px;">
+                                    <div id="settings-strength-bar"></div>
+                                </div>
+                            </div>
+                            <div class="settings-field-group" style="margin-bottom:0.85rem;">
+                                <label class="settings-label">Confirm New Password</label>
+                                <div style="position:relative;">
+                                    <input type="password" id="set-confirm-pass" class="settings-input"
+                                        placeholder="Confirm new password" style="padding-right:2.4rem;">
+                                    <i class="fas fa-eye toggle-password-settings" data-target="set-confirm-pass"></i>
+                                </div>
+                            </div>
+                            <button class="btn-primary" style="width:100%;justify-content:center;"
+                                onclick="resetPassword()">
+                                <i class="fas fa-key"></i> Update Password
+                            </button>
+                            <div id="pass-msg"
+                                style="font-size:0.78rem;margin-top:0.5rem;text-align:center;min-height:18px;"></div>
+                        </div>
+
+                        <!-- Preferences -->
+                        <div class="card">
+                            <div class="card-title"><i class="fas fa-sliders"></i> Preferences</div>
+                            <div class="pref-row">
+                                <div>
+                                    <div style="font-size:0.84rem;font-weight:600;">Dark Mode</div>
+                                    <div style="font-size:0.72rem;color:var(--muted);">Toggle dark / light theme</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="pref-dark-mode"
+                                        onchange="toggleThemeFromSettings(this.checked)">
+                                    <span class="toggle-knob"></span>
+                                </label>
+                            </div>
+                            <div class="pref-row">
+                                <div>
+                                    <div style="font-size:0.84rem;font-weight:600;">Voice Speed</div>
+                                    <div style="font-size:0.72rem;color:var(--muted);">Read aloud speed</div>
+                                </div>
+                                <select id="pref-voice-speed" class="settings-input" style="max-width:110px;"
+                                    onchange="savePrefs()">
+                                    <option value="0.7">Slow</option>
+                                    <option value="0.9" selected>Normal</option>
+                                    <option value="1.2">Fast</option>
+                                    <option value="1.5">Very Fast</option>
+                                </select>
+                            </div>
+                            <div class="pref-row">
+                                <div>
+                                    <div style="font-size:0.84rem;font-weight:600;">Attendance Alert</div>
+                                    <div style="font-size:0.72rem;color:var(--muted);">Warn when below 75%</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="pref-att-alert" checked onchange="savePrefs()">
+                                    <span class="toggle-knob"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Danger Zone -->
+                        <div class="card" style="border-color:rgba(231,76,60,0.3);">
+                            <div class="card-title" style="color:var(--error);"><i
+                                    class="fas fa-triangle-exclamation"></i> Danger Zone</div>
+                            <p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.85rem;line-height:1.55;">This
+                                will clear all your dashboard data (tasks, notes, streaks) and log you out. This cannot
+                                be undone.</p>
+                            <button class="btn-primary"
+                                style="background:linear-gradient(135deg,#e74c3c,#c0392b);width:100%;justify-content:center;"
+                                onclick="confirmClearData()">
+                                <i class="fas fa-trash-can"></i> Clear All Data & Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- OCR Verification Modal -->
+    <div id="ocr-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content card">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-check-double"></i> Verify Extracted Details</div>
+                <button class="modal-close" onclick="closeOCRModal()">&times;</button>
+            </div>
+            <p class="modal-subtitle">Review and edit the details extracted from your image before adding them to your
+                dashboard.</p>
+
+            <div id="ocr-items-container" class="ocr-items-list">
+                <!-- Items will be injected here -->
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-primary btn-sm"
+                    style="background:var(--glass-bg);color:var(--text-color);border:1px solid var(--border);"
+                    onclick="closeOCRModal()">Cancel</button>
+                <button class="btn-primary" id="ocr-confirm-btn" onclick="confirmOCRDetails()">
+                    <i class="fas fa-plus"></i> Add to Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script src="{% static 'js/dashboard.js' %}"></script>
+</body>
+
+</html>
