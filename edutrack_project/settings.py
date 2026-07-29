@@ -21,7 +21,7 @@ INSTALLED_APPS = [
     'edutrack',
 ]
 
-   MIDDLEWARE = [
+MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
